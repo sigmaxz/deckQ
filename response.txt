@@ -1,0 +1,43 @@
+void handleReport(uint8_t * buffer, uint16_t length){
+  //assumption: wait for buffer to contain all Bytes 
+  if(length >= 7){
+     uint16_t deltaX = ((buffer[4] & 0x0C) << 6) | buffer[2];
+     uint16_t deltaY = ((buffer[4] & 0x30) << 4) | buffer[3];
+     uint8_t buttonState = buffer[4] & 0x03;
+
+     //assumption: there is a timestamp member variable or global
+     //uint32_t timestamp maintaining the time
+     uint32_t updateTimestamp =  (buffer[6] << 10) | (buffer[5] << 2) | ((buffer[4] & 0xC0) >> 6);
+
+     //overflow detection
+     if((timestamp & 0x0003ffff) > (updateTimestamp & 0x0003ffff)){
+        timestamp = ((timestamp & 0xfffc0000) + 0x00040000) | updateTimestamp;
+     }
+  } 
+}
+
+----
+
+Questions:
+1) How might you adapt your code to check for sequences of 3, 4, or more cards from the previous shuffle?
+
+  I could modifiy my function checkdup(...) to have a parameter for sequence
+lengths which could call a helper function to do (n) comparisons of the sequence.
+
+2) How might you adapt your code to check for combinations of N cards, rather than sequences?
+
+  For combinations of N cards i could use a hash to list on the cards then
+check through the list for membership of the cards.
+
+3) How might you adapt your code to check for card sequences that were present in any previous shuffle? (i.e. comparing against all previous shuffles, not just the most recent one)
+
+  Store all shuffles in a vector then write a helper function that checks
+against all stored shuffles. 
+
+4) If necessary, how might you change your code to accommodate more than 4 suits, or more than 13 different card values.
+  
+  Append to the array of suits and/or cards and adjust their size variables.
+
+5) Would you do things any differently if you were optimizing purely for speed? How about if you were trying to minimize memory usage?
+
+  If optimizing for speed like mentioned before I would use a hash-list to store sequence information faster look up at the cost of more memory useage. To minimize memory usage I could leverage computing power. I could use a psudo number generator in particular linear congruential generator (LCG) as my random function. This allows me to reverse calculate previous card positions from just the memory of the current deck of cards and the LCG parameters.
